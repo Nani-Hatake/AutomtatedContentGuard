@@ -3,6 +3,8 @@ using AutomatedContentGuard.Interfaces;
 using AutomatedContentGuard.Repositories;
 using AutomatedContentGuard.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 
 // Fix for Npgsql / PostgreSQL DateTime timestamp mapping issues
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -45,17 +47,32 @@ var app = builder.Build();
 // CRITICAL FIX: Place CORS at the very top of the HTTP pipeline
 app.UseCors("AllowAll");
 
-// AUTO-MIGRATE / CREATE DB TABLES ON STARTUP
+// SAFE AUTO-CREATE TABLES ON STARTUP
 using (var scope = app.Services.CreateScope())
 {
     try
     {
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        dbContext.Database.EnsureCreated();
+        
+        // Guarantees tables are created even if the database already existed prior
+        var dbCreator = dbContext.Database.GetService<IDatabaseCreator>() as RelationalDatabaseCreator;
+        if (dbCreator != null)
+        {
+            if (!dbCreator.Exists()) 
+            {
+                dbCreator.Create();
+            }
+            if (!dbCreator.HasTables()) 
+            {
+                dbCreator.CreateTables();
+            }
+        }
+        
+        Console.WriteLine("[Database System]: Neon PostgreSQL tables verified/created successfully.");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"DB Initialization Error: {ex.Message}");
+        Console.WriteLine($"[DB Initialization Warning]: {ex.Message}");
     }
 }
 
