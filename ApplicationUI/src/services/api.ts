@@ -1,19 +1,12 @@
 import axios from 'axios';
 import type { ContentSubmission, ForbiddenWord } from '../types';
 
-// Safely access Vite environment variables without throwing TS build errors
-const getBaseUrl = (): string => {
-  try {
-    return (import.meta as unknown as { env: Record<string, string> }).env?.VITE_API_BASE_URL 
-      || 'https://automtatedcontentguard.onrender.com/api';
-  } catch {
-    return 'https://automtatedcontentguard.onrender.com/api';
-  }
-};
+// Hardcode the Render URL directly to bypass any Vercel env variable build issues
+const API_BASE_URL = 'https://automtatedcontentguard.onrender.com/api';
 
 const api = axios.create({
-  baseURL: getBaseUrl(),
-  timeout: 20000, // 20s to safely handle Render free-tier cold starts
+  baseURL: API_BASE_URL,
+  timeout: 20000, // 20s to handle Render free-tier cold starts
   headers: {
     'Content-Type': 'application/json',
   },
