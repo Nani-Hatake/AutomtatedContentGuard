@@ -40,11 +40,11 @@ namespace AutomatedContentGuard.Repositories
             return submission;
         }
 
-        public async Task<ContentSubmission> UpdateAsync(ContentSubmission submission)
+        public async Task<bool> UpdateAsync(ContentSubmission submission)
         {
             _context.ContentSubmissions.Update(submission);
-            await _context.SaveChangesAsync();
-            return submission;
+            var result = await _context.SaveChangesAsync();
+            return result > 0;
         }
 
         public async Task<bool> DeleteAsync(int id)
