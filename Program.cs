@@ -1,3 +1,6 @@
+// Fix for Npgsql / PostgreSQL DateTime timestamp mapping issues
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 using AutomatedContentGuard.Data;
 using AutomatedContentGuard.Interfaces;
 using AutomatedContentGuard.Repositories;
