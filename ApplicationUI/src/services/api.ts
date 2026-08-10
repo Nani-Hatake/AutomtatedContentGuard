@@ -1,9 +1,14 @@
 import axios from 'axios';
 import type { ContentSubmission, ForbiddenWord } from '../types';
 
+// Reads from Vercel's environment variable first, falls back to Render URL directly
+const API_BASE_URL = 
+  import.meta.env.VITE_API_BASE_URL || 
+  'https://automtatedcontentguard.onrender.com/api';
+
 const api = axios.create({
-  baseURL: 'https://automtatedcontentguard.onrender.com/api',
-  timeout: 15000, // Increased to 15s to handle Render free-tier cold starts
+  baseURL: API_BASE_URL,
+  timeout: 20000, // 20s to safely handle Render free-tier cold starts
   headers: {
     'Content-Type': 'application/json',
   },
