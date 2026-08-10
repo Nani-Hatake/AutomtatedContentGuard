@@ -1,16 +1,18 @@
 import axios from 'axios';
 import type { ContentSubmission, ForbiddenWord } from '../types';
 
-// Cast import.meta to 'any' so TypeScript doesn't throw TS2339 build errors in Vite
-const meta = import.meta as any;
-
-// Reads from Vercel's environment variable first, falls back to Render URL directly
-const API_BASE_URL: string = 
-  meta.env?.VITE_API_BASE_URL || 
-  'https://automtatedcontentguard.onrender.com/api';
+// Safely access Vite environment variables without throwing TS build errors
+const getBaseUrl = (): string => {
+  try {
+    return (import.meta as unknown as { env: Record<string, string> }).env?.VITE_API_BASE_URL 
+      || 'https://automtatedcontentguard.onrender.com/api';
+  } catch {
+    return 'https://automtatedcontentguard.onrender.com/api';
+  }
+};
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: getBaseUrl(),
   timeout: 20000, // 20s to safely handle Render free-tier cold starts
   headers: {
     'Content-Type': 'application/json',
