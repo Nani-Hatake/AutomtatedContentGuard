@@ -44,11 +44,17 @@ function App() {
     setDemoMode(false);
 
     try {
-      const [submissionsData, forbiddenWordsData] = await Promise.all([fetchSubmissions(), fetchForbiddenWords()]);
+      const [submissionsData, forbiddenWordsData] = await Promise.all([
+        fetchSubmissions(),
+        fetchForbiddenWords(),
+      ]);
       setSubmissions(submissionsData.sort((a, b) => b.id - a.id));
       setForbiddenWords(forbiddenWordsData);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unable to connect to the backend. Ensure http://127.0.0.1:5030 is running.';
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Unable to reach the backend service. Please verify your connection.';
       setError(message);
       setSubmissions(demoSubmissions);
       setForbiddenWords(demoForbiddenWords);
@@ -70,7 +76,11 @@ function App() {
     <DashboardShell>
       <div className="space-y-6">
         <LiveModerationPanel onResult={handleNewSubmission} />
-        <SubmissionTable submissions={submissions} activeFilter={activeFilter} onFilterChange={setActiveFilter} />
+        <SubmissionTable
+          submissions={submissions}
+          activeFilter={activeFilter}
+          onFilterChange={setActiveFilter}
+        />
       </div>
       <div className="space-y-6">
         <section className="rounded-[2rem] border border-white/10 bg-slate-950/80 p-6 shadow-glow backdrop-blur-xl">
@@ -85,19 +95,36 @@ function App() {
             </div>
             <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-5">
               <p className="text-sm text-slate-400">Forbidden words</p>
-              <p className="mt-3 text-3xl font-semibold text-emerald-200">{forbiddenWords.length}</p>
+              <p className="mt-3 text-3xl font-semibold text-emerald-200">
+                {forbiddenWords.length}
+              </p>
             </div>
           </div>
           {demoMode ? (
-            <div className="mt-6 rounded-3xl bg-amber-500/10 p-5 text-sm text-amber-200">Backend unavailable — showing demo data. Please start the ASP.NET backend and refresh.</div>
+            <div className="mt-6 flex items-center justify-between rounded-3xl bg-amber-500/10 p-5 text-sm text-amber-200">
+              <span>Backend unavailable — showing fallback demo data.</span>
+              <button
+                onClick={loadData}
+                className="rounded-xl bg-amber-500/20 px-3 py-1.5 text-xs font-medium hover:bg-amber-500/30 transition-colors"
+              >
+                Retry
+              </button>
+            </div>
           ) : null}
           {loading ? (
-            <div className="mt-6 rounded-3xl bg-slate-950/80 p-5 text-sm text-slate-400">Loading latest data…</div>
+            <div className="mt-6 rounded-3xl bg-slate-950/80 p-5 text-sm text-slate-400">
+              Loading latest data…
+            </div>
           ) : error ? (
-            <div className="mt-6 rounded-3xl bg-rose-500/10 p-5 text-sm text-rose-200">{error}</div>
+            <div className="mt-6 rounded-3xl bg-rose-500/10 p-5 text-sm text-rose-200">
+              {error}
+            </div>
           ) : null}
         </section>
-        <ForbiddenWordsPanel forbiddenWords={forbiddenWords} onWordsUpdated={setForbiddenWords} />
+        <ForbiddenWordsPanel
+          forbiddenWords={forbiddenWords}
+          onWordsUpdated={setForbiddenWords}
+        />
       </div>
     </DashboardShell>
   );
