@@ -1,4 +1,4 @@
-# Use official .NET SDK image to build the app
+# Use official .NET 10 SDK image to build the app
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
@@ -10,7 +10,7 @@ RUN dotnet restore
 COPY . .
 RUN dotnet publish -c Release -o /app/out
 
-# Runtime stage
+# Runtime stage using .NET 10 ASP.NET
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 COPY --from=build /app/out .
