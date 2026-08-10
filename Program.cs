@@ -6,36 +6,49 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Add Controllers and API documentation services
+// 1. Add CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+// 2. Add Controllers and API documentation
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 2. Register ApplicationDbContext with SQL Server Connection String
+// 3. Register ApplicationDbContext with PostgreSQL (Neon DB)
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// 3. Register Repositories for Dependency Injection
+// 4. Register Repositories
 builder.Services.AddScoped<IContentRepository, ContentSubmissionRepo>();
 builder.Services.AddScoped<IForbiddenWordRepository, ForbiddenWordRepo>();
 
-// 4. Register Services for Dependency Injection
+// 5. Register Services
 builder.Services.AddScoped<IContentSubmissionService, ContentSubmissionService>();
 builder.Services.AddScoped<IForbiddenWordService, ForbiddenWordService>();
 
-// Registered via AddHttpClient to automatically inject HttpClient & IConfiguration
+// HttpClient Registration
 builder.Services.AddHttpClient<GeminiModerationService>();
 
 var app = builder.Build();
 
-// 5. Configure the HTTP request pipeline (Middleware)
+// 6. Enable CORS Middleware (Must be placed early)
+app.UseCors("AllowAll");
+
+// 7. Middleware pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 
