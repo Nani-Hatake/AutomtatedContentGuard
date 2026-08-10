@@ -1,11 +1,11 @@
-// Fix for Npgsql / PostgreSQL DateTime timestamp mapping issues
-AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
-
 using AutomatedContentGuard.Data;
 using AutomatedContentGuard.Interfaces;
 using AutomatedContentGuard.Repositories;
 using AutomatedContentGuard.Services;
 using Microsoft.EntityFrameworkCore;
+
+// Fix for Npgsql / PostgreSQL DateTime timestamp mapping issues
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,7 +43,6 @@ builder.Services.AddHttpClient<GeminiModerationService>();
 var app = builder.Build();
 
 // CRITICAL FIX: Place CORS at the very top of the HTTP pipeline
-// so it applies even if an unhandled exception or 500 error occurs
 app.UseCors("AllowAll");
 
 // AUTO-MIGRATE / CREATE DB TABLES ON STARTUP
