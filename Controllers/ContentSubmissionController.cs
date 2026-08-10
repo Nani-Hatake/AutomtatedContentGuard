@@ -1,84 +1,26 @@
-using AutomatedContentGuard.DTOs;
-using AutomatedContentGuard.Interfaces;
-using AutomatedContentGuard.Models;
-using Microsoft.AspNetCore.Mvc;
-
-namespace AutomatedContentGuard.Controllers
+[HttpPost]
+public async Task<IActionResult> Create([FromBody] CreateContentSubmissionDto dto)
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class ContentSubmissionsController : ControllerBase
+    if (dto == null || string.IsNullOrWhiteSpace(dto.TextContent))
     {
-        private readonly IContentSubmissionService _contentSubmissionService;
+        return BadRequest(new { message = "TextContent cannot be empty." });
+    }
 
-        public ContentSubmissionsController(IContentSubmissionService contentSubmissionService)
-        {
-            _contentSubmissionService = contentSubmissionService;
-        }
+    try
+    {
+        var createdSubmission = await _contentSubmissionService.CreateAsync(dto);
+        return CreatedAtAction(nameof(GetById), new { id = createdSubmission.Id }, createdSubmission);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[POST ContentSubmissions ERROR]: {ex}");
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<ContentSubmission>>> GetAll()
-        {
-            try
-            {
-                var submissions = await _contentSubmissionService.GetAllAsync();
-                return Ok(submissions ?? new List<ContentSubmission>());
-            }
-            catch (Exception ex)
-            {
-                // Logs the exact error in Render dashboard logs
-                Console.WriteLine($"[GetAll Submissions Error]: {ex.ToString()}");
-                
-                // Returns an empty array with 200 OK to keep CORS alive and prevent the frontend from hard crashing
-                return Ok(new List<ContentSubmission>());
-            }
-        }
+        // Unwraps the exact PostgreSQL database error (e.g., duplicate key, missing column, null constraint)
+        string detailedError = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<ContentSubmission>> GetById(int id)
-        {
-            try
-            {
-                var submission = await _contentSubmissionService.GetByIdAsync(id);
-
-                if (submission == null)
-                {
-                    return NotFound(new { message = $"Submission with ID {id} not found." });
-                }
-
-                return Ok(submission);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[GetById Error]: {ex.ToString()}");
-                return StatusCode(500, new { message = "An error occurred retrieving the submission.", details = ex.Message });
-            }
-        }
-
-        [HttpPost]
-        public async Task<ActionResult<ContentSubmission>> Create([FromBody] CreateContentSubmissionDto dto)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            try
-            {
-                var createdSubmission = await _contentSubmissionService.CreateAsync(dto);
-                return CreatedAtAction(nameof(GetById), new { id = createdSubmission.Id }, createdSubmission);
-            }
-            catch (Exception ex)
-            {
-                // Print detailed error trace in Render Logs
-                Console.WriteLine($"[POST ContentSubmissions Error]: {ex.ToString()}");
-
-                // Return a structured 500 JSON response so Axios receives proper error text instead of CORS failure
-                return StatusCode(500, new { 
-                    message = "Content analysis failed. The moderation API or database encountered an issue.", 
-                    details = ex.Message 
-                });
-            }
-        }
+        return StatusCode(500, new { 
+            message = "Database Save Error", 
+            details = detailedError 
+        });
     }
 }
