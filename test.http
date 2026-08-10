@@ -1,0 +1,76 @@
+
+@host = https://localhost:7108
+
+### 1. FORBIDDEN WORDS API TESTS
+
+### 1.1 Create First Forbidden Word ("spam")
+POST {{host}}/api/ForbiddenWords
+Content-Type: application/json
+
+{
+  "word": "spam",
+  "severityScore": 3
+}
+
+###
+
+### 1.2 Create Second Forbidden Word ("hate")
+POST {{host}}/api/ForbiddenWords
+Content-Type: application/json
+
+{
+  "word": "hate",
+  "severityScore": 5
+}
+
+###
+
+### 1.3 Get All Forbidden Words
+GET {{host}}/api/ForbiddenWords
+Accept: application/json
+
+###
+
+### 1.4 Get Forbidden Word by ID (ID: 1)
+GET {{host}}/api/ForbiddenWords/1
+Accept: application/json
+
+###
+
+### 1.5 Delete Forbidden Word by ID (ID: 1)
+DELETE {{host}}/api/ForbiddenWords/1
+
+
+
+### 2. CONTENT SUBMISSIONS API TESTS
+### 2.1 Submit Clean Content (No Bad Words -> Low Toxicity Score)
+POST {{host}}/api/ContentSubmissions
+Content-Type: application/json
+
+{
+  "text": "Hello world! This is a clean comment with no bad words.",
+  "userId": "User123"
+}
+
+###
+
+### 2.2 Submit Toxic Content (Contains "hate" -> High Toxicity Score)
+POST {{host}}/api/ContentSubmissions
+Content-Type: application/json
+
+{
+  "text": "I really hate when this happens, this is bad!",
+  "userId": "User456"
+}
+
+###
+
+### 2.3 Get All Content Submissions
+GET {{host}}/api/ContentSubmissions
+Accept: application/json
+
+###
+
+### 2.4 Get Content Submission by ID (ID: 1)
+GET {{host}}/api/ContentSubmissions/1
+Accept: application/json

@@ -1,0 +1,6 @@
+@AutomatedContentGuard_HostAddress = http://localhost:5030
+
+GET {{AutomatedContentGuard_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
