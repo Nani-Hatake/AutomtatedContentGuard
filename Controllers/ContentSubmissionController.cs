@@ -26,7 +26,7 @@ namespace AutomatedContentGuard.Controllers
             }
             catch (Exception ex)
             {
-                // Logs the exact error in Render dashboard logs so you can inspect the stack trace
+                // Logs the exact error in Render dashboard logs
                 Console.WriteLine($"[GetAll Submissions Error]: {ex.ToString()}");
                 
                 // Returns an empty array with 200 OK to keep CORS alive and prevent the frontend from hard crashing
@@ -70,8 +70,14 @@ namespace AutomatedContentGuard.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Create Submission Error]: {ex.ToString()}");
-                return StatusCode(500, new { message = "An error occurred processing the submission.", details = ex.Message });
+                // Print detailed error trace in Render Logs
+                Console.WriteLine($"[POST ContentSubmissions Error]: {ex.ToString()}");
+
+                // Return a structured 500 JSON response so Axios receives proper error text instead of CORS failure
+                return StatusCode(500, new { 
+                    message = "Content analysis failed. The moderation API or database encountered an issue.", 
+                    details = ex.Message 
+                });
             }
         }
     }
