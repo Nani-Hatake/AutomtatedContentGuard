@@ -2,8 +2,8 @@ import axios from 'axios';
 import type { ContentSubmission, ForbiddenWord } from '../types';
 
 const api = axios.create({
-  baseURL: '/api',
-  timeout: 8000,
+  baseURL: 'https://automtatedcontentguard.onrender.com/api',
+  timeout: 15000, // Increased to 15s to handle Render free-tier cold starts
   headers: {
     'Content-Type': 'application/json',
   },
@@ -12,7 +12,7 @@ const api = axios.create({
 const handleAxiosError = (error: unknown): never => {
   if (axios.isAxiosError(error)) {
     if (error.code === 'ECONNABORTED') {
-      throw new Error('Request timed out. Ensure the backend is running and try again.');
+      throw new Error('Request timed out. The backend might be waking up from sleep mode, please try again.');
     }
     if (error.response) {
       const responseData = error.response.data as Record<string, unknown> | null;
@@ -24,7 +24,7 @@ const handleAxiosError = (error: unknown): never => {
         : `Backend responded with status ${error.response.status}.`;
       throw new Error(message);
     }
-    throw new Error('Unable to reach the backend. Please verify the dev server and proxy settings.');
+    throw new Error('Unable to reach the backend. Please verify your connection.');
   }
 
   throw new Error('Unexpected API error.');
