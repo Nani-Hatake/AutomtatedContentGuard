@@ -1,6 +1,10 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using AutomatedContentGuard.DTOs;
 using AutomatedContentGuard.Interfaces;
 using AutomatedContentGuard.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace AutomatedContentGuard.Services
 {
@@ -51,19 +55,35 @@ namespace AutomatedContentGuard.Services
                 Console.WriteLine($"[AI Moderation Fallback Triggered]: {ex.Message}");
             }
 
-            // 2. Map properties with explicit UTC timestamps for Npgsql / PostgreSQL compatibility
+            // 2. Map properties with exact types & UTC timestamps for Npgsql / PostgreSQL
             var submission = new ContentSubmission
             {
                 TextContent = dto.TextContent,
-                ToxicityScore = (int)Math.Round(toxicityScore),
+                ToxicityScore = toxicityScore, // Fixed: Pass double directly without int cast
                 IsFlagged = isFlagged,
                 Status = status,
-                CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc),
-                SubmittedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc)
+                CreatedAt = DateTime.UtcNow,
+                SubmittedAt = DateTime.UtcNow
             };
 
-            // 3. Save to Neon PostgreSQL Database
-            return await _contentRepo.CreateAsync(submission);
+            // 3. Save to Neon PostgreSQL Database with robust EF Core exception unwrapping
+            try
+            {
+                return await _contentRepo.CreateAsync(submission);
+            }
+            catch (DbUpdateException dbEx)
+            {
+                // Pulls the EXACT inner database constraint/type error from PostgreSQL
+                string postgresMessage = dbEx.InnerException?.Message ?? dbEx.Message;
+                Console.WriteLine($"[PostgreSQL Database Save Error]: {postgresMessage}");
+                throw new Exception($"Database Save Failed: {postgresMessage}");
+            }
+            catch (Exception ex)
+            {
+                string generalMessage = ex.InnerException?.Message ?? ex.Message;
+                Console.WriteLine($"[Submission Creation Error]: {generalMessage}");
+                throw new Exception($"Submission Failed: {generalMessage}");
+            }
         }
 
         public async Task<bool> DeleteAsync(int id)
