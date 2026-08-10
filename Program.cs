@@ -39,6 +39,13 @@ builder.Services.AddHttpClient<GeminiModerationService>();
 
 var app = builder.Build();
 
+// AUTO-MIGRATE / CREATE NEON DB TABLES ON STARTUP
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    dbContext.Database.EnsureCreated();
+}
+
 // 6. Enable CORS Middleware (Must be placed early)
 app.UseCors("AllowAll");
 
