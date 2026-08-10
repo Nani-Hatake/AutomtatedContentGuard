@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Add CORS
+// 1. Add CORS Policy
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -17,12 +17,12 @@ builder.Services.AddCors(options =>
     });
 });
 
-// 2. Add Controllers and API documentation
+// 2. Add Controllers and Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 3. Register ApplicationDbContext with PostgreSQL (Neon DB)
+// 3. Register DbContext with Neon PostgreSQL
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -34,22 +34,29 @@ builder.Services.AddScoped<IForbiddenWordRepository, ForbiddenWordRepo>();
 builder.Services.AddScoped<IContentSubmissionService, ContentSubmissionService>();
 builder.Services.AddScoped<IForbiddenWordService, ForbiddenWordService>();
 
-// HttpClient Registration
+// Register HttpClient for Gemini/HuggingFace Moderation
 builder.Services.AddHttpClient<GeminiModerationService>();
 
 var app = builder.Build();
 
-// AUTO-MIGRATE / CREATE NEON DB TABLES ON STARTUP
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    dbContext.Database.EnsureCreated();
-}
-
-// 6. Enable CORS Middleware (Must be placed early)
+// CRITICAL FIX: Place CORS at the very top of the HTTP pipeline
+// so it applies even if an unhandled exception or 500 error occurs
 app.UseCors("AllowAll");
 
-// 7. Middleware pipeline
+// AUTO-MIGRATE / CREATE DB TABLES ON STARTUP
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        dbContext.Database.EnsureCreated();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"DB Initialization Error: {ex.Message}");
+    }
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
