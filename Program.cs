@@ -47,28 +47,20 @@ var app = builder.Build();
 // CRITICAL FIX: Place CORS at the very top of the HTTP pipeline
 app.UseCors("AllowAll");
 
-// SAFE AUTO-CREATE TABLES ON STARTUP
+// SAFE AUTO-RECREATE TABLES ON STARTUP
 using (var scope = app.Services.CreateScope())
 {
     try
     {
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        
-        // Guarantees tables are created even if the database already existed prior
-        var dbCreator = dbContext.Database.GetService<IDatabaseCreator>() as RelationalDatabaseCreator;
-        if (dbCreator != null)
-        {
-            if (!dbCreator.Exists()) 
-            {
-                dbCreator.Create();
-            }
-            if (!dbCreator.HasTables()) 
-            {
-                dbCreator.CreateTables();
-            }
-        }
-        
-        Console.WriteLine("[Database System]: Neon PostgreSQL tables verified/created successfully.");
+
+        // 1. Drop outdated table so EF recreates it with all missing columns (Status, ToxicityScore, etc.)
+        dbContext.Database.ExecuteSqlRaw("DROP TABLE IF EXISTS \"ContentSubmissions\" CASCADE;");
+
+        // 2. Recreate tables with complete updated schema
+        dbContext.Database.EnsureCreated();
+
+        Console.WriteLine("[Database System]: Neon PostgreSQL tables recreated successfully with complete schema.");
     }
     catch (Exception ex)
     {
