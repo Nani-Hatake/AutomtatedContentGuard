@@ -1,58 +1,56 @@
-﻿using AutomatedContentGuard.Models;
-using AutomatedContentGuard.Interfaces;
-using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using AutomatedContentGuard.Data;
+using AutomatedContentGuard.Interfaces;
+using AutomatedContentGuard.Models;
+using Microsoft.EntityFrameworkCore;
+
 namespace AutomatedContentGuard.Repositories
 {
-    public class ContentSubmissionRepo:IContentRepository
+    public class ContentSubmissionRepo : IContentRepository
     {
-        private readonly ApplicationDbContext _Context;
+        private readonly ApplicationDbContext _context;
 
         public ContentSubmissionRepo(ApplicationDbContext context)
         {
-            _Context = context;
+            _context = context;
         }
+
         public async Task<IEnumerable<ContentSubmission>> GetAllAsync()
         {
-            return await _Context.ContentSubmission.ToListAsync();
-        }
-        public async Task<ContentSubmission>GetByIdAsync(int id)
-        {
-            return await _Context.ContentSubmission.FindAsync(id);
-        }
-        public async Task<ContentSubmission> CreateAsync(ContentSubmission contentSubmission)
-        {
-            await _Context.ContentSubmission.AddAsync(contentSubmission);
-            await _Context.SaveChangesAsync();
-            return contentSubmission;
+            return await _context.ContentSubmissions.ToListAsync();
         }
 
-        public async Task<bool>DeleteAsync(int id)
+        public async Task<ContentSubmission?> GetByIdAsync(int id)
         {
-            var contentSubmission = await _Context.ContentSubmission.FindAsync(id);
-            if (contentSubmission == null)
+            return await _context.ContentSubmissions.FindAsync(id);
+        }
+
+        public async Task<ContentSubmission> CreateAsync(ContentSubmission submission)
+        {
+            await _context.ContentSubmissions.AddAsync(submission);
+            await _context.SaveChangesAsync();
+            return submission;
+        }
+
+        public async Task<ContentSubmission> AddAsync(ContentSubmission submission)
+        {
+            await _context.ContentSubmissions.AddAsync(submission);
+            await _context.SaveChangesAsync();
+            return submission;
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var submission = await _context.ContentSubmissions.FindAsync(id);
+            if (submission == null)
             {
                 return false;
             }
-            _Context.ContentSubmission.Remove(contentSubmission);
-            await _Context.SaveChangesAsync();
+
+            _context.ContentSubmissions.Remove(submission);
+            await _context.SaveChangesAsync();
             return true;
         }
-
-
-        public async Task<bool>UpdateAsync(ContentSubmission content)
-        {
-            var existingContent = await _Context.ContentSubmission.FindAsync(content.Id);
-            if (existingContent == null)
-            {
-                return false;
-            }
-            existingContent.TextContent = content.TextContent;
-            existingContent.ToxicityScore = content.ToxicityScore;
-            existingContent.Status = content.Status;
-            await _Context.SaveChangesAsync();
-            return true;
-        }
-    
     }
 }
